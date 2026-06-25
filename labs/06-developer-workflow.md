@@ -8,7 +8,7 @@
 ## Part A — The Local Developer Loop
 
 ```
-Edit code → Run tests (Floci in Podman) → Fix → Repeat
+Edit code → Run tests (Floci in Docker / Podman) → Fix → Repeat
               ↑ fast, no cloud, no cost
 ```
 
@@ -16,9 +16,9 @@ The goal is to **never need a real AWS account** during development or testing.
 
 ---
 
-## Part B — Floci with Podman Compose (Project Template)
+## Part B — Floci as a Compose Sidecar (Project Template)
 
-Add Floci as a sidecar service in your project's `compose.yaml`:
+The `compose.yaml` is the same regardless of runtime — only the command differs.
 
 ```yaml
 # compose.yaml
@@ -45,13 +45,15 @@ services:
       retries: 10
 ```
 
-Start your full stack locally:
+Start your full stack:
 
-```bash
-podman compose up
-```
+| Runtime | Command |
+|---------|--------|
+| Docker | `docker compose up` |
+| Podman | `podman compose up` |
 
-> 💡 **Podman on macOS:** make sure your Podman machine is running first: `podman machine start`
+> 💡 **macOS + Podman:** ensure the Podman machine is running first: `podman machine start`  
+> 💡 **Windows:** run these commands inside your **WSL2** terminal.
 
 ---
 
@@ -59,13 +61,17 @@ podman compose up
 
 Floci has first-class Testcontainers support. Your tests spin up a fresh Floci instance per test suite — fully isolated, no shared state.
 
-> ⚙️ **Podman + Testcontainers:** set `DOCKER_HOST` to point at the Podman socket before running tests:
-> ```bash
-> export DOCKER_HOST=unix:///run/podman/podman.sock            # Linux
-> export DOCKER_HOST=$(podman machine inspect \
->   --format 'unix://{{.ConnectionInfo.PodmanSocket.Path}}')  # macOS
-> ```
-> Or add `TESTCONTAINERS_RYUK_DISABLED=true` to skip the Ryuk resource-reaper (not supported by Podman rootless).
+> ⚙️ **Set `DOCKER_HOST` before running tests** so Testcontainers finds your container runtime:
+>
+> | Platform | Runtime | Command |
+> |----------|---------|--------|
+> | macOS | Docker Desktop | *(no change needed — socket auto-detected)* |
+> | macOS | Podman | `export DOCKER_HOST=$(podman machine inspect --format 'unix://{{.ConnectionInfo.PodmanSocket.Path}}')` |
+> | Windows (WSL2) | Docker Desktop | `export DOCKER_HOST=unix:///var/run/docker.sock` |
+> | Windows (WSL2) | Podman | `export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock` |
+>
+> For **Podman rootless** on any platform, also set:  
+> `export TESTCONTAINERS_RYUK_DISABLED=true` (Ryuk resource-reaper is not supported by rootless Podman).
 
 ### Node.js / TypeScript
 
@@ -261,7 +267,7 @@ Every time Floci starts, your environment is pre-wired and ready.
 
 | Practice | Benefit |
 |----------|---------|
-| Floci as Podman Compose sidecar | Full stack locally, zero cloud |
+| Floci as Podman / Docker Compose sidecar | Full stack locally, zero cloud |
 | Testcontainers per test suite | Isolated, repeatable, fast |
 | GitHub Actions service container | CI with no AWS account/secrets |
 | Init hooks | Pre-seeded environment every run |

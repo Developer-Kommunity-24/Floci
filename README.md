@@ -35,12 +35,29 @@ Run AWS cloud services on your laptop — no cloud account, no auth tokens, no s
 
 ## 🛠️ Prerequisites
 
-| Tool | Version | Install |
-|------|---------|---------|
-| Podman | ≥ 5.x | `brew install podman` then `podman machine init && podman machine start` |
-| Floci CLI | latest | `brew install floci-io/tap/floci` |
-| AWS CLI | ≥ 2.x | `brew install awscli` |
-| jq | any | `brew install jq` |
+Pick your OS and container runtime — all combinations are supported.
+
+### macOS
+
+| Tool | Docker option | Podman option |
+|------|--------------|---------------|
+| Container runtime | `brew install --cask docker` | `brew install podman && podman machine init && podman machine start` |
+| Compose | Bundled with Docker Desktop | `brew install podman-compose` |
+| Floci CLI | `brew install floci-io/tap/floci` | `brew install floci-io/tap/floci` |
+| AWS CLI | `brew install awscli` | `brew install awscli` |
+| jq | `brew install jq` | `brew install jq` |
+
+### Windows
+
+> ⚠️ **WSL2 required.** Enable it first: `wsl --install` in PowerShell (Admin), then reboot.
+
+| Tool | Docker option | Podman option |
+|------|--------------|---------------|
+| Container runtime | [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) | [Podman Desktop](https://podman-desktop.io/) + `winget install RedHat.Podman` |
+| Compose | Bundled with Docker Desktop | `winget install RedHat.Podman` (includes `podman compose`) |
+| Floci CLI | Run inside WSL2 terminal: `brew install floci-io/tap/floci` | Same |
+| AWS CLI | `winget install Amazon.AWSCLI` | `winget install Amazon.AWSCLI` |
+| jq | `winget install jqlang.jq` | `winget install jqlang.jq` |
 
 > **No AWS account required.** All resources run locally inside Floci.
 

@@ -5,20 +5,125 @@
 
 ---
 
+## Step 0 — Choose Your Platform & Runtime
+
+Pick the column that matches your machine. You only need to follow **one** path.
+
+|  | 🍎 macOS + Docker | 🍎 macOS + Podman | 🪟 Windows + Docker | 🪟 Windows + Podman |
+|--|:-----------------:|:-----------------:|:-------------------:|:-------------------:|
+| Supported | ✅ | ✅ | ✅ | ✅ |
+| Shell used | zsh / bash | zsh / bash | WSL2 (bash) | WSL2 (bash) |
+| Compose cmd | `docker compose` | `podman compose` | `docker compose` | `podman compose` |
+
+> 🪟 **Windows users:** all terminal commands in this workshop run inside a **WSL2** shell.  
+> Open it with: `wsl` in PowerShell, or launch "Ubuntu" from the Start menu.  
+> Enable WSL2 first if needed: run `wsl --install` in PowerShell (Admin), then reboot.
+
+---
+
 ## Step 1 — Install Prerequisites
 
+### 🍎 macOS — Docker
+
 ```bash
+# Docker Desktop
+brew install --cask docker
+# Open Docker Desktop once to complete setup, then verify:
+docker --version
+
 # Floci CLI
 brew install floci-io/tap/floci
 
-# AWS CLI (skip if already installed)
-brew install awscli
-
-# jq — pretty-print JSON responses
-brew install jq
+# AWS CLI + jq
+brew install awscli jq
 ```
 
-Verify:
+---
+
+### 🍎 macOS — Podman
+
+```bash
+# Podman + Podman Compose
+brew install podman podman-compose
+
+# Initialise and start the Podman VM
+podman machine init
+podman machine start
+
+# Verify
+podman --version
+
+# Floci CLI
+brew install floci-io/tap/floci
+
+# AWS CLI + jq
+brew install awscli jq
+```
+
+---
+
+### 🪟 Windows — Docker
+
+> Run all of the following inside your **WSL2** terminal.
+
+1. Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/).  
+   In Docker Desktop → Settings → **Resources → WSL Integration** → enable your distro.
+
+2. Inside WSL2:
+
+```bash
+# Verify Docker is visible inside WSL2
+docker --version
+
+# Floci CLI (via Homebrew in WSL2)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+brew install floci-io/tap/floci
+
+# AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install
+
+# jq
+sudo apt-get install -y jq
+```
+
+---
+
+### 🪟 Windows — Podman
+
+> Run all of the following inside your **WSL2** terminal.
+
+1. Install [Podman Desktop](https://podman-desktop.io/) on Windows.  
+   Or via winget (PowerShell Admin): `winget install RedHat.Podman RedHat.PodmanDesktop`
+
+2. Inside WSL2:
+
+```bash
+# Install Podman in WSL2
+sudo apt-get update && sudo apt-get install -y podman podman-compose
+
+# Verify
+podman --version
+
+# Floci CLI (via Homebrew in WSL2)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+brew install floci-io/tap/floci
+
+# AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install
+
+# jq
+sudo apt-get install -y jq
+```
+
+---
+
+### ✅ Verify All Tools
+
+Run this on any platform:
 
 ```bash
 floci --version
@@ -30,11 +135,13 @@ jq --version
 
 ## Step 2 — Start Floci
 
+### Option A — Floci CLI (recommended, any platform)
+
 ```bash
 floci start
 ```
 
-You should see output like:
+You should see:
 
 ```
 ✔ Floci is running at http://localhost:4566
@@ -42,22 +149,61 @@ You should see output like:
   Services: 59 available
 ```
 
-> **Alternative — Podman Compose:**
-> If you prefer Podman Compose, create a `compose.yaml` in your project root:
->
-> ```yaml
-> services:
->   floci:
->     image: floci/floci:latest
->     ports:
->       - "4566:4566"
-> ```
->
-> Then run: `podman compose up -d`
+---
+
+### Option B — Docker Compose
+
+```yaml
+# compose.yaml
+services:
+  floci:
+    image: floci/floci:latest
+    ports:
+      - "4566:4566"
+```
+
+```bash
+docker compose up -d
+```
+
+---
+
+### Option C — Podman Compose
+
+```yaml
+# compose.yaml
+services:
+  floci:
+    image: floci/floci:latest
+    ports:
+      - "4566:4566"
+```
+
+```bash
+podman compose up -d
+```
+
+---
+
+### Option D — Podman CLI (rootless, no compose)
+
+```bash
+podman network create floci-net
+
+podman run -d --name floci \
+  --network floci-net \
+  -p 4566:4566 \
+  -v /run/user/$(id -u)/podman/podman.sock:/var/run/docker.sock:Z \
+  -e FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK=floci-net \
+  -e FLOCI_HOSTNAME=floci \
+  floci/floci
+```
 
 ---
 
 ## Step 3 — Point Your AWS Tools at Floci
+
+### macOS / WSL2 (bash / zsh)
 
 ```bash
 eval $(floci env)
@@ -72,7 +218,16 @@ export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 ```
 
-> 💡 You can also set these manually. Floci accepts **any** key/secret — no real credentials required.
+### Windows — PowerShell (native, without WSL2)
+
+```powershell
+$env:AWS_ENDPOINT_URL      = "http://localhost:4566"
+$env:AWS_DEFAULT_REGION    = "us-east-1"
+$env:AWS_ACCESS_KEY_ID     = "test"
+$env:AWS_SECRET_ACCESS_KEY = "test"
+```
+
+> 💡 Floci accepts **any** value for key/secret — no real AWS credentials required.
 
 ---
 
@@ -82,7 +237,7 @@ export AWS_SECRET_ACCESS_KEY=test
 curl -s http://localhost:4566/_floci/health | jq .
 ```
 
-Expected response:
+Expected:
 
 ```json
 {
@@ -91,17 +246,12 @@ Expected response:
   "services": {
     "s3": "running",
     "sqs": "running",
-    "dynamodb": "running",
-    ...
+    "dynamodb": "running"
   }
 }
 ```
 
-You can also open the Floci UI in your browser:
-
-```
-http://localhost:4566
-```
+Open the Floci UI in your browser: **http://localhost:4566**
 
 ---
 
@@ -127,7 +277,11 @@ make_bucket: test-bucket
 
 | Problem | Fix |
 |---------|-----|
-| `floci: command not found` | Run `brew install floci-io/tap/floci` |
-| Port 4566 already in use | `lsof -i :4566` then kill the process |
-| Podman machine not running | `podman machine start` |
-| `connection refused` | Wait a few seconds and retry; Floci is still starting |
+| `floci: command not found` | `brew install floci-io/tap/floci` |
+| Port 4566 already in use | `lsof -i :4566` (macOS/Linux) or `netstat -ano \| findstr 4566` (Windows) then kill the process |
+| Docker not running (macOS) | Open Docker Desktop |
+| Podman machine not running (macOS) | `podman machine start` |
+| Docker not visible in WSL2 | Docker Desktop → Settings → WSL Integration → enable your distro |
+| `connection refused` | Wait ~10s and retry; Floci may still be starting |
+| Podman rootless: `permission denied` on socket | Add `:Z` SELinux label to the volume mount |
+
