@@ -14,11 +14,19 @@ export AWS_SECRET_ACCESS_KEY=test
 echo "✅ AWS_ENDPOINT_URL  = $AWS_ENDPOINT_URL"
 echo "✅ AWS_DEFAULT_REGION = $AWS_DEFAULT_REGION"
 
+# Verify Podman machine is running (macOS)
+if [[ "$(uname)" == "Darwin" ]]; then
+  if ! podman machine inspect > /dev/null 2>&1; then
+    echo "⚠️  Podman machine not running. Starting it..."
+    podman machine start
+  fi
+fi
+
 # Verify Floci is running
 if curl -sf "$AWS_ENDPOINT_URL/_floci/health" > /dev/null 2>&1; then
   echo "✅ Floci is running at $AWS_ENDPOINT_URL"
 else
   echo "❌ Floci is NOT reachable at $AWS_ENDPOINT_URL"
-  echo "   Run: floci start"
+  echo "   Run: floci start   (or: podman compose up -d)"
   return 1 2>/dev/null || exit 1
 fi

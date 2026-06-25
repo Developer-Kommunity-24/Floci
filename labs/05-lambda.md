@@ -197,11 +197,18 @@ services:
   floci:
     image: floci/floci:latest
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Podman socket — exposes the container runtime to Floci for Lambda execution
+      - /run/podman/podman.sock:/var/run/docker.sock
       - ./lambda-demo:/hot-reload   # mount your source directory
     environment:
       FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED: "true"
 ```
+
+> 💡 **macOS (Podman machine):** the socket path is inside the VM. Get it with:
+> ```bash
+> podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}'
+> ```
+> Use that path in the volume mount above.
 
 Then deploy pointing at the hot-reload S3 bucket:
 

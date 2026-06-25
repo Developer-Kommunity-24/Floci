@@ -42,8 +42,8 @@ You should see output like:
   Services: 59 available
 ```
 
-> **Alternative — Docker Compose:**
-> If you prefer Docker Compose, create a `compose.yaml` in your project root:
+> **Alternative — Podman Compose:**
+> If you prefer Podman Compose, create a `compose.yaml` in your project root:
 >
 > ```yaml
 > services:
@@ -53,7 +53,7 @@ You should see output like:
 >       - "4566:4566"
 > ```
 >
-> Then run: `docker compose up -d`
+> Then run: `podman compose up -d`
 
 ---
 
@@ -129,5 +129,5 @@ make_bucket: test-bucket
 |---------|-----|
 | `floci: command not found` | Run `brew install floci-io/tap/floci` |
 | Port 4566 already in use | `lsof -i :4566` then kill the process |
-| Docker not running | Open Docker Desktop |
+| Podman machine not running | `podman machine start` |
 | `connection refused` | Wait a few seconds and retry; Floci is still starting |

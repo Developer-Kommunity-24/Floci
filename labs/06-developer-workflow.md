@@ -8,7 +8,7 @@
 ## Part A — The Local Developer Loop
 
 ```
-Edit code → Run tests (Floci in Docker) → Fix → Repeat
+Edit code → Run tests (Floci in Podman) → Fix → Repeat
               ↑ fast, no cloud, no cost
 ```
 
@@ -16,7 +16,7 @@ The goal is to **never need a real AWS account** during development or testing.
 
 ---
 
-## Part B — Floci with Docker Compose (Project Template)
+## Part B — Floci with Podman Compose (Project Template)
 
 Add Floci as a sidecar service in your project's `compose.yaml`:
 
@@ -48,14 +48,24 @@ services:
 Start your full stack locally:
 
 ```bash
-docker compose up
+podman compose up
 ```
+
+> 💡 **Podman on macOS:** make sure your Podman machine is running first: `podman machine start`
 
 ---
 
 ## Part C — Testcontainers (Unit / Integration Tests)
 
 Floci has first-class Testcontainers support. Your tests spin up a fresh Floci instance per test suite — fully isolated, no shared state.
+
+> ⚙️ **Podman + Testcontainers:** set `DOCKER_HOST` to point at the Podman socket before running tests:
+> ```bash
+> export DOCKER_HOST=unix:///run/podman/podman.sock            # Linux
+> export DOCKER_HOST=$(podman machine inspect \
+>   --format 'unix://{{.ConnectionInfo.PodmanSocket.Path}}')  # macOS
+> ```
+> Or add `TESTCONTAINERS_RYUK_DISABLED=true` to skip the Ryuk resource-reaper (not supported by Podman rootless).
 
 ### Node.js / TypeScript
 
@@ -251,7 +261,7 @@ Every time Floci starts, your environment is pre-wired and ready.
 
 | Practice | Benefit |
 |----------|---------|
-| Floci as Docker Compose sidecar | Full stack locally, zero cloud |
+| Floci as Podman Compose sidecar | Full stack locally, zero cloud |
 | Testcontainers per test suite | Isolated, repeatable, fast |
 | GitHub Actions service container | CI with no AWS account/secrets |
 | Init hooks | Pre-seeded environment every run |

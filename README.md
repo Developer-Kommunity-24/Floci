@@ -37,7 +37,7 @@ Run AWS cloud services on your laptop — no cloud account, no auth tokens, no s
 
 | Tool | Version | Install |
 |------|---------|---------|
-| Docker | ≥ 24.x | [docker.com](https://www.docker.com/get-started) |
+| Podman | ≥ 5.x | `brew install podman` then `podman machine init && podman machine start` |
 | Floci CLI | latest | `brew install floci-io/tap/floci` |
 | AWS CLI | ≥ 2.x | `brew install awscli` |
 | jq | any | `brew install jq` |
