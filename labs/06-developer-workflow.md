@@ -61,7 +61,16 @@ Start your full stack:
 
 Floci has first-class Testcontainers support. Your tests spin up a fresh Floci instance per test suite — fully isolated, no shared state.
 
-> ⚙️ **Set `DOCKER_HOST` before running tests** so Testcontainers finds your container runtime:
+The `testcontainers-demo/` directory in this repo has a complete working example. Try it now:
+
+**Step 1 — Set `DOCKER_HOST` so Testcontainers finds Podman (macOS)**
+
+```bash
+export DOCKER_HOST=$(podman machine inspect --format 'unix://{{.ConnectionInfo.PodmanSocket.Path}}')
+export TESTCONTAINERS_RYUK_DISABLED=true
+```
+
+> ⚙️ **All platforms:**
 >
 > | Platform | Runtime | Command |
 > |----------|---------|--------|
@@ -70,25 +79,46 @@ Floci has first-class Testcontainers support. Your tests spin up a fresh Floci i
 > | Windows (WSL2) | Docker Desktop | `export DOCKER_HOST=unix:///var/run/docker.sock` |
 > | Windows (WSL2) | Podman | `export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock` |
 >
-> For **Podman rootless** on any platform, also set:  
-> `export TESTCONTAINERS_RYUK_DISABLED=true` (Ryuk resource-reaper is not supported by rootless Podman).
+> For **Podman** on any platform, also set:  
+> `export TESTCONTAINERS_RYUK_DISABLED=true` (Ryuk resource-reaper is not supported by Podman).
 
-### Node.js / TypeScript
-
-Install:
+**Step 2 — Install and run**
 
 ```bash
-npm install --save-dev @floci/testcontainers
+cd testcontainers-demo
+npm install
+npm test
 ```
 
-Test:
+Expected output:
+
+```
+ PASS  src/s3.test.ts
+  S3
+    ✓ creates a bucket and lists it
+    ✓ puts and gets an object
+
+ PASS  src/sqs.test.ts
+  SQS
+    ✓ sends and receives a message
+
+Tests: 3 passed, 3 total
+```
+
+Each test suite starts its own Floci container, runs, then tears it down — **zero shared state, zero cloud**.
+
+---
+
+### How it works (Node.js / TypeScript)
+
+`testcontainers-demo/src/s3.test.ts`:
 
 ```typescript
-import { FlociContainer } from "@floci/testcontainers";
-import { S3Client, CreateBucketCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import { FlociContainer, StartedFlociContainer } from "@floci/testcontainers";
+import { S3Client, CreateBucketCommand, PutObjectCommand, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
 
-describe("S3 integration", () => {
-  let floci: FlociContainer;
+describe("S3", () => {
+  let floci: StartedFlociContainer;
   let s3: S3Client;
 
   beforeAll(async () => {
@@ -109,10 +139,16 @@ describe("S3 integration", () => {
     await floci.stop();
   });
 
-  it("creates and lists a bucket", async () => {
-    await s3.send(new CreateBucketCommand({ Bucket: "test-bucket" }));
+  it("creates a bucket and lists it", async () => {
+    await s3.send(new CreateBucketCommand({ Bucket: "workshop-bucket" }));
     const { Buckets } = await s3.send(new ListBucketsCommand({}));
-    expect(Buckets?.map(b => b.Name)).toContain("test-bucket");
+    expect(Buckets?.some((b) => b.Name === "workshop-bucket")).toBe(true);
+  });
+
+  it("puts and gets an object", async () => {
+    await s3.send(new PutObjectCommand({ Bucket: "workshop-bucket", Key: "hello.txt", Body: "Hello, Floci!" }));
+    const { Body } = await s3.send(new GetObjectCommand({ Bucket: "workshop-bucket", Key: "hello.txt" }));
+    expect(await Body!.transformToString()).toBe("Hello, Floci!");
   });
 });
 ```
