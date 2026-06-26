@@ -1,0 +1,23 @@
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: floci
+    user: root
+    privileged: true
+    ports:
+      - "4566:4566"
+      - "6379-6399:6379-6399"
+      - "7001-7099:7001-7099"
+    volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock
+      - ./data:/app/data
+    environment:
+      FLOCI_DEFAULT_REGION: us-east-1
+      FLOCI_HOSTNAME: localhost
+      FLOCI_STORAGE_MODE: hybrid
+      FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK: floci_default
+      # Required for Podman: bypasses host-gateway auto-detection which Podman doesn't support
+      FLOCI_SERVICES_LAMBDA_DOCKER_HOST_OVERRIDE: floci
+      FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED: "true"
+      FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ALLOWED_PATHS: /Users
+    restart: unless-stopped
