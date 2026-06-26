@@ -116,4 +116,4 @@ aws lambda delete-function --function-name "$FUNCTION_NAME"
 rm -rf "$WORK_DIR"
 
 echo ""
-echo "✅  Lambda demo complete!"
+echo '✅  Lambda demo complete!'

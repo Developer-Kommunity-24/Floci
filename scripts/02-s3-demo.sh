@@ -20,7 +20,7 @@ aws s3 mb "s3://$BUCKET"
 # 2. Upload objects
 echo ""
 echo "▶ Uploading objects..."
-echo "hello, floci!" | aws s3 cp - "s3://$BUCKET/hello.txt"
+echo 'hello, floci!' | aws s3 cp - "s3://$BUCKET/hello.txt"
 
 echo '{"event":"order.placed","orderId":"ORD-001","amount":49.99}' > /tmp/event.json
 aws s3 cp /tmp/event.json "s3://$BUCKET/events/order.json"
@@ -58,4 +58,4 @@ aws s3 rm "s3://$BUCKET" --recursive
 aws s3 rb "s3://$BUCKET"
 
 echo ""
-echo "✅  S3 demo complete!"
+echo '✅  S3 demo complete!'

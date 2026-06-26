@@ -12,6 +12,7 @@ export AWS_ENDPOINT_URL=http://localhost:4566
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
+export AWS_PAGER=""
 ```
 
 > 💡 Already set from Lab 01? Just verify: `echo $AWS_ENDPOINT_URL`
@@ -63,15 +64,24 @@ aws sqs receive-message \
 ### Delete a message (acknowledge it)
 
 ```bash
-# Capture the receipt handle from the receive-message response
-RECEIPT=$(aws sqs receive-message \
+# Receive the message and capture the full response in one call
+MSG=$(aws sqs receive-message \
   --queue-url $AWS_ENDPOINT_URL/000000000000/orders \
-  --query 'Messages[0].ReceiptHandle' --output text)
+  --max-number-of-messages 1)
 
+# Inspect it
+echo "$MSG" | jq .
+
+# Extract the receipt handle from that same response
+RECEIPT=$(echo "$MSG" | jq -r '.Messages[0].ReceiptHandle')
+
+# Delete (acknowledge) using the receipt handle
 aws sqs delete-message \
   --queue-url $AWS_ENDPOINT_URL/000000000000/orders \
   --receipt-handle "$RECEIPT"
 ```
+
+> ⚠️ **Why not call `receive-message` twice?** The first call puts the message into an **in-flight** state (visibility timeout). A second call returns nothing, making `$RECEIPT` empty and the delete fail. Always extract the receipt handle from the **same** response.
 
 ### Get queue attributes (depth, etc.)
 
@@ -152,9 +162,12 @@ aws dynamodb scan --table-name Users | jq .
 ```bash
 aws dynamodb scan \
   --table-name Users \
-  --filter-expression "plan = :p" \
+  --filter-expression "#p = :p" \
+  --expression-attribute-names '{"#p":"plan"}' \
   --expression-attribute-values '{":p":{"S":"pro"}}' | jq .
 ```
+
+> ⚠️ `plan` is a DynamoDB **reserved keyword**. Use `--expression-attribute-names` to alias it as `#p`.
 
 ### Update an item
 
@@ -162,7 +175,8 @@ aws dynamodb scan \
 aws dynamodb update-item \
   --table-name Users \
   --key '{"id": {"S": "user-002"}}' \
-  --update-expression "SET plan = :p" \
+  --update-expression "SET #p = :p" \
+  --expression-attribute-names '{"#p":"plan"}' \
   --expression-attribute-values '{":p":{"S":"pro"}}'
 ```
 

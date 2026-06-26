@@ -88,4 +88,4 @@ aws sqs delete-queue --queue-url "$QUEUE_URL"
 aws dynamodb delete-table --table-name Products
 
 echo ""
-echo "✅  SQS + DynamoDB demo complete!"
+echo '✅  SQS + DynamoDB demo complete!'

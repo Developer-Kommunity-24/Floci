@@ -78,4 +78,4 @@ for QUEUE in email-service analytics-service audit-service; do
 done
 
 echo ""
-echo "✅  SNS fan-out demo complete!"
+echo '✅  SNS fan-out demo complete!'
