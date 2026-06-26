@@ -19,6 +19,27 @@ node --version   # Node.js required to write the function locally
 
 > 💡 Already set from Lab 01? Just verify: `echo $AWS_ENDPOINT_URL`
 
+> ⚠️ **Podman users — one-time setup required before Lambda works.**  
+> Podman's `host-gateway` feature (used by Floci to wire Lambda containers) needs to be enabled inside the Podman VM. Run this **once**:
+>
+> ```bash
+> # 1. Configure host-gateway IP inside the Podman VM
+> podman machine ssh "sudo mkdir -p /etc/containers && printf '[containers]\nhost_containers_internal_ip = \"10.88.0.1\"\n' | sudo tee /etc/containers/containers.conf"
+>
+> # 2. Restart the Podman socket daemon to pick up the change
+> podman machine ssh "sudo systemctl restart podman.socket"
+>
+> # 3. Restart Floci
+> podman compose down && podman compose up -d
+> ```
+>
+> Your `compose.yaml` must also include these two env vars (already in the repo's `compose.yaml`):
+> ```yaml
+> environment:
+>   FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK: floci_default
+>   FLOCI_SERVICES_LAMBDA_DOCKER_HOST_OVERRIDE: floci
+> ```
+
 ---
 
 ## Part A — Write the Function
@@ -195,40 +216,59 @@ aws lambda get-function-configuration \
 
 ## Part G — Hot Reload (Bonus)
 
-Enable hot reload so your function code updates automatically without re-deploying:
+Hot reload lets you edit `index.mjs` and have it take effect on the next invocation — no re-zip, no re-deploy.
 
-Add to your `compose.yaml`:
+**How it works:** Floci passes the `S3Key` path directly to Podman as a bind-mount source for the Lambda container. That path must be an **absolute path visible to the Podman VM** (not just the macOS host).
+
+Since Podman machine shares your macOS home directory into the VM at the same path, this works:
+
+1. Update `compose.yaml` — remove the `/hot-reload` volume (not needed) and add the allowed paths env var:
 
 ```yaml
 services:
   floci:
     image: floci/floci:latest
-    volumes:
-      # Podman socket — exposes the container runtime to Floci for Lambda execution
-      - /run/podman/podman.sock:/var/run/docker.sock
-      - ./lambda-demo:/hot-reload   # mount your source directory
+    # ... other config unchanged ...
     environment:
       FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED: "true"
+      FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ALLOWED_PATHS: /Users
 ```
 
-> 💡 **macOS (Podman machine):** the socket path is inside the VM. Get it with:
-> ```bash
-> podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}'
-> ```
-> Use that path in the volume mount above.
-
-Then deploy pointing at the hot-reload S3 bucket:
+2. Restart Floci:
 
 ```bash
+podman compose down && podman compose up -d
+```
+
+3. Deploy pointing at the absolute path of your code directory:
+
+```bash
+# Make sure you're in the lambda-demo directory
+cd ~/floci-workshop/lambda-demo   # or wherever your lambda-demo lives
+
 aws lambda create-function \
   --function-name hello-hot \
   --runtime nodejs22.x \
   --role arn:aws:iam::000000000000:role/lambda-role \
   --handler index.handler \
-  --code S3Bucket=hot-reload,S3Key=/path/to/lambda-demo
+  --code S3Bucket=hot-reload,S3Key=$(pwd)
 ```
 
-Now edits to `index.mjs` take effect on the next invocation — no re-zip, no re-deploy.
+4. Invoke it:
+
+```bash
+aws lambda invoke \
+  --function-name hello-hot \
+  --payload '{"name":"Hot Reload"}' \
+  --cli-binary-format raw-in-base64-out \
+  response-hot.json
+
+cat response-hot.json | jq .
+```
+
+5. Now edit `index.mjs` (change the message, add a field), then invoke again — the change takes effect immediately, no redeployment needed.
+
+> ⚠️ `FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ALLOWED_PATHS=/Users` is required on macOS — it whitelists the bind-mount source so Floci doesn't reject the path.
 
 ---
 

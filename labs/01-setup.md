@@ -190,16 +190,37 @@ services:
   floci:
     image: floci/floci:latest
     container_name: floci
+    user: root
+    privileged: true
     ports:
       - "4566:4566"
+      - "6379-6399:6379-6399"
+      - "7001-7099:7001-7099"
     volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock
       - ./data:/app/data
     environment:
+      FLOCI_DEFAULT_REGION: us-east-1
       FLOCI_HOSTNAME: localhost
+      FLOCI_STORAGE_MODE: hybrid
+      FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK: floci_default
+      FLOCI_SERVICES_LAMBDA_DOCKER_HOST_OVERRIDE: floci
     restart: unless-stopped
 ```
 
-3. Start Floci:
+3. **One-time Podman setup** — enables `host-gateway` inside the VM (required for Lambda):
+
+```bash
+# Configure host-gateway IP
+podman machine ssh "sudo mkdir -p /etc/containers && printf '[containers]\nhost_containers_internal_ip = \"10.88.0.1\"\n' | sudo tee /etc/containers/containers.conf"
+
+# Restart the socket daemon
+podman machine ssh "sudo systemctl restart podman.socket"
+```
+
+> 💡 This is only needed once. The config persists across Podman machine restarts.
+
+4. Start Floci:
 
 ```bash
 podman compose up -d
@@ -210,18 +231,24 @@ podman compose up -d
 ### Option D — Podman CLI (rootless, no compose)
 
 ```bash
-podman network create floci-net
+# Get the socket path inside the VM
+podman info --format '{{.Host.RemoteSocket.Path}}'
+# e.g. /run/podman/podman.sock
 
 podman run -d --name floci \
-  --network floci-net \
   -p 4566:4566 \
-  -v /run/user/$(id -u)/podman/podman.sock:/var/run/docker.sock:Z \
-  -e FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK=floci-net \
-  -e FLOCI_HOSTNAME=floci \
-  floci/floci
+  -p 6379-6399:6379-6399 \
+  -p 7001-7099:7001-7099 \
+  -v /run/podman/podman.sock:/var/run/docker.sock \
+  -v $(pwd)/data:/app/data \
+  -e FLOCI_DEFAULT_REGION=us-east-1 \
+  -e FLOCI_HOSTNAME=localhost \
+  -e FLOCI_STORAGE_MODE=hybrid \
+  --user root \
+  floci/floci:latest
 ```
 
-> ✅ Floci is ready when you see it listening on `http://localhost:4566`.
+> 💡 `--user root` is required so Floci can access the Podman socket to spawn Lambda containers.
 
 ---
 

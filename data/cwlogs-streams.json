@@ -1,0 +1,52 @@
+{
+  "000000000000/us-east-1::/aws/lambda/hello-floci::2026/06/26/[$LATEST]65ce6a22" : {
+    "logGroupName" : "/aws/lambda/hello-floci",
+    "logStreamName" : "2026/06/26/[$LATEST]65ce6a22",
+    "createdTime" : 1782456051490,
+    "firstEventTimestamp" : 1782456051745,
+    "lastEventTimestamp" : 1782456051745,
+    "lastIngestionTime" : 1782456051746,
+    "uploadSequenceToken" : "3e5b27d8-ea93-4911-87e7-a4b847d4c7b8",
+    "storedBytes" : 139
+  },
+  "000000000000/us-east-1::/aws/lambda/hello-hot::2026/06/26/[$LATEST]14960d7a" : {
+    "logGroupName" : "/aws/lambda/hello-hot",
+    "logStreamName" : "2026/06/26/[$LATEST]14960d7a",
+    "createdTime" : 1782456169249,
+    "firstEventTimestamp" : null,
+    "lastEventTimestamp" : null,
+    "lastIngestionTime" : 0,
+    "uploadSequenceToken" : "a3d876fb-39de-46cb-9048-dd6183d8165f",
+    "storedBytes" : 0
+  },
+  "000000000000/us-east-1::/aws/lambda/hello-floci::2026/06/26/[$LATEST]f8df964b" : {
+    "logGroupName" : "/aws/lambda/hello-floci",
+    "logStreamName" : "2026/06/26/[$LATEST]f8df964b",
+    "createdTime" : 1782455975638,
+    "firstEventTimestamp" : 1782455975889,
+    "lastEventTimestamp" : 1782456014330,
+    "lastIngestionTime" : 1782456014330,
+    "uploadSequenceToken" : "28b0efea-45cd-48ba-984e-a43a22066013",
+    "storedBytes" : 390
+  },
+  "000000000000/us-east-1::/aws/lambda/hello-hot::2026/06/26/[$LATEST]7ba70c3a" : {
+    "logGroupName" : "/aws/lambda/hello-hot",
+    "logStreamName" : "2026/06/26/[$LATEST]7ba70c3a",
+    "createdTime" : 1782456149843,
+    "firstEventTimestamp" : null,
+    "lastEventTimestamp" : null,
+    "lastIngestionTime" : 0,
+    "uploadSequenceToken" : "68ed7b1d-d133-4726-93e2-76eebe90f1eb",
+    "storedBytes" : 0
+  },
+  "000000000000/us-east-1::/aws/lambda/hello-hot::2026/06/26/[$LATEST]67501e15" : {
+    "logGroupName" : "/aws/lambda/hello-hot",
+    "logStreamName" : "2026/06/26/[$LATEST]67501e15",
+    "createdTime" : 1782456125330,
+    "firstEventTimestamp" : null,
+    "lastEventTimestamp" : null,
+    "lastIngestionTime" : 0,
+    "uploadSequenceToken" : "b7b2796c-deb1-417e-93ee-816d6262cb15",
+    "storedBytes" : 0
+  }
+}
