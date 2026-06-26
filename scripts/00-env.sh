@@ -40,11 +40,10 @@ if [[ "$OS" == "Darwin" ]]; then
 elif [[ "$OS" == "Linux" ]]; then
   if command -v podman &>/dev/null; then
     RUNTIME="Podman"
-    # Set DOCKER_HOST for Testcontainers compatibility
     PODMAN_SOCK="/run/user/$(id -u)/podman/podman.sock"
     if [[ -S "$PODMAN_SOCK" ]]; then
       export DOCKER_HOST="unix://$PODMAN_SOCK"
-      echo "✅ DOCKER_HOST set to Podman socket"
+      echo "✅ DOCKER_HOST set to Podman socket (for Testcontainers)"
     fi
   elif command -v docker &>/dev/null; then
     RUNTIME="Docker"
@@ -61,8 +60,9 @@ if curl -sf "$AWS_ENDPOINT_URL/_floci/health" > /dev/null 2>&1; then
   echo "✅ Floci is running at $AWS_ENDPOINT_URL"
 else
   echo "❌ Floci is NOT reachable at $AWS_ENDPOINT_URL"
-  echo "   Options:"
-  echo "     floci start"
+  echo "   Start it with one of:"
+  echo "     docker run -d --name floci -p 4566:4566 floci/floci:latest"
+  echo "     podman run -d --name floci -p 4566:4566 floci/floci:latest"
   echo "     docker compose up -d"
   echo "     podman compose up -d"
   return 1 2>/dev/null || exit 1

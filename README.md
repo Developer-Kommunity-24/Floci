@@ -43,7 +43,7 @@ Pick your OS and container runtime — all combinations are supported.
 |------|--------------|---------------|
 | Container runtime | `brew install --cask docker` | `brew install podman && podman machine init && podman machine start` |
 | Compose | Bundled with Docker Desktop | `brew install podman-compose` |
-| Floci CLI | `brew install floci-io/tap/floci` | `brew install floci-io/tap/floci` |
+| Floci image | `docker pull floci/floci:latest` | `podman pull floci/floci:latest` |
 | AWS CLI | `brew install awscli` | `brew install awscli` |
 | jq | `brew install jq` | `brew install jq` |
 
@@ -55,7 +55,7 @@ Pick your OS and container runtime — all combinations are supported.
 |------|--------------|---------------|
 | Container runtime | [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) | [Podman Desktop](https://podman-desktop.io/) + `winget install RedHat.Podman` |
 | Compose | Bundled with Docker Desktop | `winget install RedHat.Podman` (includes `podman compose`) |
-| Floci CLI | Run inside WSL2 terminal: `brew install floci-io/tap/floci` | Same |
+| Floci image | WSL2: `docker pull floci/floci:latest` | WSL2: `podman pull floci/floci:latest` |
 | AWS CLI | `winget install Amazon.AWSCLI` | `winget install Amazon.AWSCLI` |
 | jq | `winget install jqlang.jq` | `winget install jqlang.jq` |
 
@@ -67,10 +67,14 @@ Pick your OS and container runtime — all combinations are supported.
 
 ```bash
 # 1. Start Floci
-floci start
+docker run -d --name floci -p 4566:4566 floci/floci:latest
+# (or: podman run -d --name floci -p 4566:4566 floci/floci:latest)
 
 # 2. Point your AWS tools at Floci
-eval $(floci env)
+export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_DEFAULT_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
 
 # 3. Try it out
 aws s3 mb s3://hello-floci

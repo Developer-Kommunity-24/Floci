@@ -31,11 +31,11 @@ brew install --cask docker
 # Open Docker Desktop once to complete setup, then verify:
 docker --version
 
-# Floci CLI
-brew install floci-io/tap/floci
-
 # AWS CLI + jq
 brew install awscli jq
+
+# Pull the Floci image
+docker pull floci/floci:latest
 ```
 
 ---
@@ -53,11 +53,11 @@ podman machine start
 # Verify
 podman --version
 
-# Floci CLI
-brew install floci-io/tap/floci
-
 # AWS CLI + jq
 brew install awscli jq
+
+# Pull the Floci image
+podman pull floci/floci:latest
 ```
 
 ---
@@ -75,17 +75,15 @@ brew install awscli jq
 # Verify Docker is visible inside WSL2
 docker --version
 
-# Floci CLI (via Homebrew in WSL2)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-brew install floci-io/tap/floci
-
 # AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
 unzip /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install
 
 # jq
 sudo apt-get install -y jq
+
+# Pull the Floci image
+docker pull floci/floci:latest
 ```
 
 ---
@@ -106,17 +104,15 @@ sudo apt-get update && sudo apt-get install -y podman podman-compose
 # Verify
 podman --version
 
-# Floci CLI (via Homebrew in WSL2)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-brew install floci-io/tap/floci
-
 # AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
 unzip /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install
 
 # jq
 sudo apt-get install -y jq
+
+# Pull the Floci image
+podman pull floci/floci:latest
 ```
 
 ---
@@ -126,27 +122,22 @@ sudo apt-get install -y jq
 Run this on any platform:
 
 ```bash
-floci --version
 aws --version
 jq --version
+docker images floci/floci   # or: podman images floci/floci
 ```
 
 ---
 
 ## Step 2 — Start Floci
 
-### Option A — Floci CLI (recommended, any platform)
+### Option A — Docker (quick run)
 
 ```bash
-floci start
-```
-
-You should see:
-
-```
-✔ Floci is running at http://localhost:4566
-  Version : 1.x.x
-  Services: 59 available
+docker run -d --name floci \
+  -p 4566:4566 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  floci/floci:latest
 ```
 
 ---
@@ -160,6 +151,8 @@ services:
     image: floci/floci:latest
     ports:
       - "4566:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 ```bash
@@ -199,6 +192,8 @@ podman run -d --name floci \
   floci/floci
 ```
 
+> ✅ Floci is ready when you see it listening on `http://localhost:4566`.
+
 ---
 
 ## Step 3 — Point Your AWS Tools at Floci
@@ -206,17 +201,13 @@ podman run -d --name floci \
 ### macOS / WSL2 (bash / zsh)
 
 ```bash
-eval $(floci env)
-```
-
-This exports:
-
-```bash
 export AWS_ENDPOINT_URL=http://localhost:4566
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 ```
+
+> 💡 Add these to your `~/.zshrc` or `~/.bashrc` so they persist across terminal sessions during the workshop.
 
 ### Windows — PowerShell (native, without WSL2)
 
@@ -277,11 +268,10 @@ make_bucket: test-bucket
 
 | Problem | Fix |
 |---------|-----|
-| `floci: command not found` | `brew install floci-io/tap/floci` |
+| `Cannot connect to Docker daemon` | Open Docker Desktop (macOS) or run `sudo systemctl start docker` (Linux/WSL2) |
 | Port 4566 already in use | `lsof -i :4566` (macOS/Linux) or `netstat -ano \| findstr 4566` (Windows) then kill the process |
-| Docker not running (macOS) | Open Docker Desktop |
 | Podman machine not running (macOS) | `podman machine start` |
 | Docker not visible in WSL2 | Docker Desktop → Settings → WSL Integration → enable your distro |
-| `connection refused` | Wait ~10s and retry; Floci may still be starting |
+| `connection refused` on health check | Wait ~10s and retry; Floci container may still be starting |
 | Podman rootless: `permission denied` on socket | Add `:Z` SELinux label to the volume mount |
 
