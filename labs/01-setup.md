@@ -144,16 +144,30 @@ docker run -d --name floci \
 
 ### Option B — Docker Compose
 
+1. Create a `compose.yaml` file in your project folder:
+
+```bash
+mkdir -p ~/floci-workshop && cd ~/floci-workshop
+```
+
+2. Paste the following into `compose.yaml`:
+
 ```yaml
-# compose.yaml
 services:
   floci:
     image: floci/floci:latest
+    container_name: floci
     ports:
       - "4566:4566"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+    environment:
+      FLOCI_HOSTNAME: localhost
+    restart: unless-stopped
 ```
+
+3. Start Floci:
 
 ```bash
 docker compose up -d
@@ -163,14 +177,29 @@ docker compose up -d
 
 ### Option C — Podman Compose
 
+1. Create a `compose.yaml` file in your project folder:
+
+```bash
+mkdir -p ~/floci-workshop && cd ~/floci-workshop
+```
+
+2. Paste the following into `compose.yaml`:
+
 ```yaml
-# compose.yaml
 services:
   floci:
     image: floci/floci:latest
+    container_name: floci
     ports:
       - "4566:4566"
+    volumes:
+      - ./data:/app/data
+    environment:
+      FLOCI_HOSTNAME: localhost
+    restart: unless-stopped
 ```
+
+3. Start Floci:
 
 ```bash
 podman compose up -d
@@ -228,19 +257,32 @@ $env:AWS_SECRET_ACCESS_KEY = "test"
 curl -s http://localhost:4566/_floci/health | jq .
 ```
 
-Expected:
+Expected (truncated — you'll see all 65 services):
 
 ```json
 {
-  "status": "UP",
-  "version": "1.x.x",
+  "version": "1.5.27",
+  "original_edition": "floci-always-free",
+  "edition": "community",
   "services": {
     "s3": "running",
     "sqs": "running",
-    "dynamodb": "running"
+    "dynamodb": "running",
+    "sns": "running",
+    "lambda": "running",
+    "apigateway": "running",
+    "iam": "running",
+    "kinesis": "running",
+    "kms": "running",
+    "secretsmanager": "running",
+    "cloudformation": "running",
+    "bedrock-runtime": "running",
+    "... (65 services total)": "running"
   }
 }
 ```
+
+> 💡 All 65 services start automatically — no config needed. Notice there's no `"status": "UP"` field; if you get a valid JSON response with services listed, Floci is healthy.
 
 Open the Floci UI in your browser: **http://localhost:4566**
 

@@ -8,9 +8,15 @@
 ## Prerequisites
 
 ```bash
-eval $(floci env)
+export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_DEFAULT_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+
 node --version   # Node.js required to write the function locally
 ```
+
+> 💡 Already set from Lab 01? Just verify: `echo $AWS_ENDPOINT_URL`
 
 ---
 
